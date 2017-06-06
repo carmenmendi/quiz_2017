@@ -1,9 +1,9 @@
 body {
-    background: #999;
+    background:lightblue;
 }
 
 #page:after {
-    color: white;
+    color: lightblue;
     content: "Wide Layout";
 }
 
@@ -20,5 +20,3 @@ body {
     flex: 1;
     overflow: auto;
 }
-
-

@@ -10,5 +10,8 @@ router.get('/', function(req, res, next) {
 router.get('/author', function(req, res, next) {
     res.render('author');
 });
-
+/* GET ayuda */
+router.get('/help', function(req, res, next) {
+    res.render('help');
+});
 module.exports = router;
