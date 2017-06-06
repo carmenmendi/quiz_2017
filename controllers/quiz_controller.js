@@ -4,28 +4,27 @@ var Sequelize = require('sequelize');
 var paginate = require('../helpers/paginate').paginate;
 
 
-// Autoload el quiz asociado a :quizId
-exports.load = function (req, res, next, quizId) {
-
+//Autoload el quiz asociado a :quizId
+exports.load = function (req, res, next, quizId) {//Incluimos un parametro en la peticion que es quiz, solo si existe
     models.Quiz.findById(quizId, {
         include: [
-            models.Tip,
+            {model: models.Tip, include: [{model: models.User, as : 'Author'}]},
             {model: models.User, as: 'Author'}
         ]
-    })
-    .then(function (quiz) {
-        if (quiz) {
-            req.quiz = quiz;
-            next();
-        } else {
-            throw new Error('No existe ningún quiz con id=' + quizId);
-        }
-    })
-    .catch(function (error) {
-        next(error);
-    });
-};
+    })//Realizamos la consulta a la base de datos
+        .then(function (quiz) {//que nos devuelve un quiz, que es el que pasamos como parametro en la peticion
+            if(quiz){
+                req.quiz = quiz;
+                next();
+            } else {
+                throw new Error('No existe ningún quiz con id=' + quizId);
+            }
+        })
+        .catch(function (error) {
+            next(error);
+        });
 
+};
 
 // MW que permite acciones solamente si al usuario logeado es admin o es el autor del quiz.
 exports.adminOrAuthorRequired = function(req, res, next){
@@ -42,83 +41,26 @@ exports.adminOrAuthorRequired = function(req, res, next){
 };
 
 
-// GET /quizzes
-
-
-//Autoload el quiz asociado a :quizId
-exports.load = function (req, res, next, quizId) {//Incluimos un parametro en la peticion que es quiz, solo si existe
-    models.Quiz.findById(quizId)//Realizamos la consulta a la base de datos
-        .then(function (quiz) {//que nos devuelve un quiz, que es el que pasamos como parametro en la peticion
-            if(quiz){
-                req.quiz = quiz;
-                next();
-            } else {
-                throw new Error('No existe ningún quiz con id=' + quizId);
-            }
-        })
-        .catch(function (error) {
-            next(error);
-        });
-
-};
-
-
 //GET /quizzes 
->>>>>>> practica52
 exports.index = function (req, res, next) {
 
     var countOptions = {
         where: {}
     };
-
     var title = "Preguntas";
-
     //Busquedas:
     var search = req.query.search || '';
     if(search){
         var search_like = "%" + search.replace(/ +/g,"%") + "%";
 
-
-        countOptions.where.question = { $like: search_like };
+        countOptions.where = {question: {like: search_like}};
     }
+    if(req.user){//Si se accede mediante /user/id/quizzes
 
-    // Si existe req.user, mostrar solo sus preguntas.
-    if (req.user) {
         countOptions.where.AuthorId = req.user.id;
         title = "Preguntas de " + req.user.username;
-
-        countOptions.where = {question: {like: search_like}};
-
     }
     models.Quiz.count(countOptions)
-
-    .then(function (count) {
-
-        // Paginacion:
-
-        var items_per_page = 10;
-
-        // La pagina a mostrar viene en la query
-        var pageno = parseInt(req.query.pageno) || 1;
-
-        // Crear un string con el HTML que pinta la botonera de paginacion.
-        // Lo añado como una variable local de res para que lo pinte el layout de la aplicacion.
-        res.locals.paginate_control = paginate(count, items_per_page, pageno, req.url);
-
-        var findOptions = countOptions;
-
-        findOptions.offset = items_per_page * (pageno - 1);
-        findOptions.limit = items_per_page;
-        findOptions.include = [{model: models.User, as: 'Author'}];
-
-        return models.Quiz.findAll(findOptions);
-    })
-    .then(function (quizzes) {
-        res.render('quizzes/index.ejs', {
-            quizzes: quizzes,
-            search: search,
-            title: title
-
         .then(function (count) {
 
             //Elemento para paginacion
@@ -132,17 +74,18 @@ exports.index = function (req, res, next) {
 
             findOptions.offset = itmes_per_page*(pageno-1);
             findOptions.limit = itmes_per_page;
+            findOptions.include = [{model: models.User, as: 'Author'}];
             return models.Quiz.findAll(findOptions);
         })
         .then(function (quizzes) {
             res.render('quizzes/index.ejs', {
                 quizzes: quizzes,
-                search: search
+                search: search,
+                title: title
             });
         })
         .catch(function (error) {//Se activa si ocurre un error en el acceso a la base de datos
             next(error);
-
         });
 };
 
@@ -152,6 +95,7 @@ exports.index = function (req, res, next) {
 exports.show=function (req, res, next) {
 
    res.render('quizzes/show', {quiz: req.quiz});
+
 };
 
 //GET /quizzes/new
@@ -164,38 +108,17 @@ exports.new = function (req, res, next) {//Funcion que se encarga de mandar al u
 //POST /quizzes
 exports.create = function (req, res, next) {//funcion que a partir de los datos rellenados por el usuario crea la pregunta
 
-
-// POST /quizzes/create
-exports.create = function (req, res, next) {
-
     var authorId = req.session.user && req.session.user.id || 0;
-
-    var quiz = models.Quiz.build({
-        question: req.body.question,
-        answer: req.body.answer,
-        AuthorId: authorId
-    });
-
-    // guarda en DB los campos pregunta y respuesta de quiz
-    quiz.save({fields: ["question", "answer", "AuthorId"]})
-    .then(function (quiz) {
-        req.flash('success', 'Quiz creado con éxito.');
-        res.redirect('/quizzes/' + quiz.id);
-    })
-    .catch(Sequelize.ValidationError, function (error) {
-
-        req.flash('error', 'Errores en el formulario:');
-        for (var i in error.errors) {
-            req.flash('error', error.errors[i].value);
-        }
 
     var quiz= models.Quiz.build({//Extraemos los datos que ha rellenado el usuario en el formulario
        question: req.body.question,
-       answer: req.body.answer
+       answer: req.body.answer,
+       AuthorId: authorId
+
     });
 
     //ahora guardamos los datos
-    quiz.save({fields: ["question", "answer"]})
+    quiz.save({fields: ["question", "answer", "AuthorId"]})
         .then(function (quiz) {
             req.flash('success', 'Quiz creado con éxito');
             res.redirect('/quizzes/' + quiz.id);
@@ -211,7 +134,6 @@ exports.create = function (req, res, next) {
             req.flash('error', 'Error al crear un  Quiz:' + error.message);
             next(error);
         });
-
 
 };
 
@@ -248,28 +170,15 @@ exports.update = function (req, res, next) {//Funcion que se encarga de actualiz
 // DELETE /quizzes/:quizId
 exports.destroy = function (req, res, next) {
 
-
-    req.quiz.destroy()
-    .then(function () {
-        req.flash('success', 'Quiz borrado con éxito.');
-        res.redirect('/goback');
-    })
-    .catch(function (error) {
-        req.flash('error', 'Error al editar el Quiz: ' + error.message);
-        next(error);
-    });
-};
-
    req.quiz.destroy()//Destruimos el quiz de la BBDD
        .then(function () {
            req.flash('success', 'Quiz borrado con exito.');
-           res.redirect('/quizzes');//Volvemos al index de quizzes
+           res.redirect('/goback');
        })
        .catch(function (error) {
            req.flash('error', 'Error al borrar el Quiz' + error.message);
            next(error);
        });
-
 
 
 };
@@ -336,7 +245,11 @@ exports.randomplay = function (req, res, next) {
             var findOptions = {
                 where: whereopt,
                 offset: aleatorio,
-                limit: 1
+                limit: 1,
+                include: [
+                    {model: models.Tip, include: [{model: models.User, as : 'Author'}]},
+                    {model: models.User, as: 'Author'}
+                ]
             };
             return models.Quiz.findAll(findOptions);
         })
@@ -355,6 +268,19 @@ exports.randomplay = function (req, res, next) {
 
 // GEt /quizzes/randomcheck
 exports.randomcheck = function (req, res, next) {
+    if(req.session.randomplay){
+        if(!req.session.randomplay.resolved){
+            var aux = []
+            req.session.randomplay.resolved=aux;
+        }
+    } else {
+        var auxplay={};
+        req.session.randomplay=auxplay;
+        var aux = []
+        req.session.randomplay.resolved=aux;
+
+    }
+
     var answer = req.query.answer || "";
     var result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();//Si el usuario acierta -> true
     if(result){
