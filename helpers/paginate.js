@@ -15,7 +15,7 @@ function addPagenoToUrl(url, pageno, _param_name) {
 
 // Funcion de ayuda para paginar.
 // Devuelve un fragmento HTML con los enlaces para paginar.
-// 
+//
 exports.paginate = function (totalItems, itemsPerPage, currentPage, url, param_name) {
 
     if (totalItems <= itemsPerPage) {

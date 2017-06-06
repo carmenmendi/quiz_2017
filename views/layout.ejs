@@ -35,9 +35,13 @@
     <nav class="main" id="mainNav" role="navigation">
         <a href="/">Inicio</a>
         <a href="/quizzes">Preguntas</a>
+<<<<<<< HEAD
         <% if (session.user) { %>
             <a href="/users/<%= session.user.id %>/quizzes">Mis Preguntas</a>
         <% } %>
+=======
+	<a href="/quizzes/randomplay">Jugar</a>
+>>>>>>> practica52
         <a href="/author">Créditos</a>
 
         <% if (session.user) { %>
@@ -46,6 +50,10 @@
     </nav>
 
     <section class="main" id="mainSection">
+<<<<<<< HEAD
+=======
+
+>>>>>>> practica52
 
         <% if (messages.info) { %>
         <article id='flashinfo'>
@@ -86,10 +94,13 @@
         <%- paginate_control %>
         <% } %>
 
+
         <a href="/help"> Ayuda</a>
     </nav>
 
     <section class="main" id="mainSection">
+
+
         <%- body %>
 
     </section>
