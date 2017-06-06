@@ -1,25 +1,19 @@
+
 var path = require('path');
 
 // Cargar ORM
 var Sequelize = require('sequelize');
 
-// Para usar en local BBDD SQLite:
-//    DATABASE_URL = sqlite:///
-//    DATABASE_STORAGE = quiz.sqlite
-// Para usar en Heroku BBDD Postgres:
-//    DATABASE_URL = postgres://user:passwd@host:port/database
-
 var url, storage;
 
-if (!process.env.DATABASE_URL) {
-    url = "sqlite:///";
+if(!process.env.DATABASE_URL){//SI ESTAMOS EN LOCAL SE UTILIZA SQLITE
+    url="sqlite://";
     storage = "quiz.sqlite";
-} else {
+} else {//SI ESTAMOS EN EL ENTORNO DE HEROKU SE USA EL URL DE LA BBDD POSTGRES
     url = process.env.DATABASE_URL;
     storage = process.env.DATABASE_STORAGE || "";
 }
-
-var sequelize = new Sequelize(url, {storage: storage});
+var sequelize = new  Sequelize(url, {storage: storage});
 
 
 
